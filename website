@@ -1,0 +1,66 @@
+import openaiimport logging
+import timefrom datetime import datetime
+ 
+logging.basicConfig(filename='openai_api_usage.log', level=logging.INFO,                    format='%(asctime)s - %(levelname)s - %(message)s')
+ 
+def initialize_openai(api_key):    openai.api_key = api_key
+    logging.info("API ключ успешно установлен.")    print("API ключ установлен.")
+     
+def call_openai(prompt, max_tokens=100, temperature=0.5, retries=3, delay=5):    """
+    Выполняет запрос к API OpenAI и возвращает ответ.    
+    :param prompt: Текст запроса пользователя.    :param max_tokens: Максимальное количество токенов в ответе.
+    :param temperature: Управление креативностью ответа.    :param retries: Количество попыток при ошибках.
+    :param delay: Задержка перед повторами при ошибке.    :return: Ответ от OpenAI или None в случае ошибки.
+    """    attempt = 0
+    while attempt < retries:        try:
+            logging.info(f"Запрос: {prompt}")            response = openai.Completion.create(
+                engine="text-davinci-003",                   prompt=prompt,
+                max_tokens=max_tokens,                temperature=temperature
+            )            answer = response.choices[0].text.strip()
+            logging.info(f"Ответ: {answer}")            return answer
+        except Exception as e:            logging.error(f"Ошибка API вызова: {e}")
+            attempt += 1            print(f"Ошибка при запросе, попытка {attempt}/{retries}. Ожидание {delay} секунд...")
+            time.sleep(delay)            if 'bearer sk-ключ is not a legal HTTP header value' in str(e):
+                print("Ошибка ключа API. Напишите в наш телеграм бот с кодом 610 для получения помощи.")                break
+    return None
+def get_user_input():
+    """    Запрашивает ввод пользователя и возвращает текст.
+    :return: Строка, введенная пользователем.    """
+    prompt = input("Введите ваш запрос: ")    logging.info(f"Получен ввод пользователя: {prompt}")
+    return prompt
+
+def save_response_to_file(response, filename="openai_response.txt"):    """
+    Сохраняет ответ в текстовый файл.    :param response: Ответ от OpenAI.
+    :param filename: Имя файла для сохранения.    """
+    try:        with open(filename, 'a', encoding='utf-8') as f:
+            f.write(f"\n{datetime.now()} - Ответ: {response}\n")        print(f"Ответ успешно сохранен в файл: {filename}")
+        logging.info(f"Ответ сохранен в файл: {filename}")    except Exception as e:
+        logging.error(f"Ошибка записи в файл: {e}")        print(f"Не удалось сохранить ответ в файл: {e}")
+
+def configure_parameters():
+    """    Позволяет пользователю настроить параметры запроса.
+    :return: Кортеж из max_tokens и temperature.    """
+    try:        max_tokens = int(input("Введите максимальное количество токенов (например, 100): "))
+        temperature = float(input("Введите значение temperature (например, 0.5 для средней креативности): "))        logging.info(f"Настройки: max_tokens={max_tokens}, temperature={temperature}")
+        return max_tokens, temperature    except ValueError:
+        logging.error("Ошибка в настройках. Установлены значения по умолчанию.")        print("Некорректный ввод. Используем настройки по умолчанию.")
+        return 100, 0.5
+if name == "__main__":
+        api_key = "ЗАМЕНИТЬ АПИ КЛЮЧ"
+    
+    initialize_openai(api_key)    
+    use_custom_settings = input("Хотите настроить параметры запроса? (y/n): ").lower()
+    if use_custom_settings == 'y':        max_tokens, temperature = configure_parameters()
+    else:        max_tokens, temperature = 100, 0.5
+    
+    while True:        user_prompt = get_user_input()
+        
+        if user_prompt.lower() == 'exit':            print("Завершение работы программы.")
+            logging.info("Программа завершена пользователем.")            break
+        
+        response = call_openai(user_prompt, max_tokens=max_tokens, temperature=temperature)        
+        if response:            print("Ответ от OpenAI:", response)
+            save_to_file = input("Хотите сохранить ответ в файл? (y/n): ").lower()
+if save_to_file == 'y':
+                save_response_to_file(response)        else:
+            print("Не удалось получить ответ от OpenAI.")
